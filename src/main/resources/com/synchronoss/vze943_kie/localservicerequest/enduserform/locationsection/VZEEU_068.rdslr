@@ -1,0 +1,61 @@
+package com.synchronoss.vze943_kie.localservicerequest.enduserform.locationsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEEU_068" dialect "mvel" ruleflow-group "EU_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/enduserform" is exists
+		
+AND
+ there is no "/xml/localservicerequest/enduserform/locationsection" section
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/reqtyp" equals "AB"
+		
+AND
+ 
+Start Brace
+the "/xml/localservicerequest/lsrform/adminsection/act" is equal to values "C,D,N"
+		
+OR
+ Any occurrence of "lna" in "/xml/localservicerequest/loopserviceform/servicedetailsection" is equal to "C,N"
+End Brace
+
+		
+AND
+ 
+Start Brace
+Position 2 of "/xml/localservicerequest/lsrform/adminsection/tos" field is equal to values "P,W,X"
+		
+OR
+ Position 3 of "/xml/localservicerequest/lsrform/adminsection/tos" field is equal to values "1,2,3,4,5,6,9"
+End Brace
+
+End Brace
+
+ 	 then
+ 	 	 the error code "VZEEU132" with message "LCON IS REQUIRED"  for the field "/xml/localservicerequest/enduserform/locationsection/lcon"
+end

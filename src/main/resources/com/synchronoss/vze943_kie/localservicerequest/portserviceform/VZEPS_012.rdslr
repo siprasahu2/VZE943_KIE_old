@@ -1,0 +1,74 @@
+package com.synchronoss.vze943_kie.localservicerequest.portserviceform;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEPS_012" dialect "mvel" ruleflow-group "PS_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/portserviceform" is exists 
+		
+AND
+ The_Rule "VZEPS_012" multiple times "lna" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is populated
+		
+AND
+ Rule "VZEPS_012" multiple times "lna" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is equal to "C"
+		
+AND
+ Rule "VZEPS_012" multiple times "sdp" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is not equal to "D"
+		
+AND
+ The_Rule "VZEPS_012" multiple times "fpi" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is_not populated
+		
+AND
+ The_Rule "VZEPS_012" multiple times "pic" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is_not populated
+		
+AND
+ The_Rule "VZEPS_012" multiple times "lpic" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is_not populated
+		
+AND
+ The_Rule "VZEPS_012" multiple times "lscp" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is_not populated
+		
+AND
+ The_Rule "VZEPS_012" multiple times "otn" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is_not populated
+		
+AND
+ The_Rule "VZEPS_012" multiple times "tsp" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is_not populated
+		
+AND
+ The_Rule "VZEPS_012" multiple times "sdp" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is populated
+		
+AND
+ any occurence of "block" in "/xml/localservicerequest/portserviceform/servicedetailsection/blocking" are not populated
+		
+AND
+ any occurence of "fa" in "/xml/localservicerequest/portserviceform/servicedetailsection/features" are not populated
+		
+AND
+ any occurence of "iwjk" in "/xml/localservicerequest/portserviceform/servicedetailsection/insidewiringjack" are not populated
+End Brace
+
+	then
+ 	 	 the rule "VZEPS_012" with error code "VZEPS012" with message "WHEN LNA IS C AT LEAST ONE OF THE FIELDS FPI, PIC, LPIC, LSCP, OTN, BLOCK, TSP, IWJK, FA MUST BE POPULATED OR SDP = D" for the field "lna" of section "/xml/localservicerequest/portserviceform/servicedetailsection[i]"
+end

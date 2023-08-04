@@ -1,0 +1,41 @@
+package com.synchronoss.vze943_kie.localservicerequest.enduserform.locationsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEEU_074" dialect "mvel" ruleflow-group "EU_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/enduserform" is exists
+		
+AND
+ The_Rule "VZEEU_074" multiple times "telno" in "/xml/localservicerequest/enduserform/locationsection[i]" is_not populated
+		
+AND
+ The_Rule "VZEEU_074" multiple times "lcon" in "/xml/localservicerequest/enduserform/locationsection[i]" is populated
+End Brace
+
+ 	 then
+ 	 	 the rule "VZEEU_074" with error code "VZEEU059" with message "TELNO IS REQUIRED" for the field "telno" of section "/xml/localservicerequest/enduserform/locationsection[i]"
+end

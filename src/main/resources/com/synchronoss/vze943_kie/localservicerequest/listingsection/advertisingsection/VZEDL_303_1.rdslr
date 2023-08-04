@@ -1,0 +1,71 @@
+package com.synchronoss.vze943_kie.localservicerequest.listingsection.advertisingsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEDL_303_1" dialect "mvel" ruleflow-group "DL_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/directorylistingform" is exists 
+		
+AND
+ The_Rule "VZEDL_303_1" multiple times "advertisingsection/yphv" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is_not populated
+		
+AND
+ 
+Start Brace
+
+Start Brace
+the "/xml/localservicerequest/lsrform/adminsection/act" is populated 
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/act" not_equals "V"
+End Brace
+
+		
+OR
+ 
+Start Brace
+the "/xml/localservicerequest/lsrform/adminsection/reqtyp" equals "CB"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/act" equals "V"
+End Brace
+
+End Brace
+
+		
+AND
+ Position 1 of "/xml/localservicerequest/lsrform/adminsection/tos" field is equal to values "1,3"
+		
+AND
+ Rule "VZEDL_303_1" multiple times "listingcontrolsection/lact" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is equal to "N"
+		
+AND
+ Rule "VZEDL_303_1" multiple times "listingcontrolsection/rty" in "/xml/localservicerequest/directorylistingform/listingsection[i]" matches_the_pattern ".[mM][lL]|.[aA][mM]"
+End Brace
+
+ 	 then
+ 	 	 the rule "VZEDL_303_1" with error code "VZEDL257" with message "YPHV YELLOW PAGE HEADING VERBIAGE IS REQUIRED" for the field "advertisingsection/yphv" of section "/xml/localservicerequest/directorylistingform/listingsection[i]"
+end

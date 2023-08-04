@@ -1,0 +1,53 @@
+package com.synchronoss.vze943_kie.localservicerequest.portserviceform;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEPS_079" dialect "mvel" ruleflow-group "PS_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/portserviceform" is exists 
+		
+AND
+ The_Rule "VZEPS_079" multiple times "ecckt" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is_not populated
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/reqtyp" is equal to values "DB"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/act" is equal to values "C,V"
+		
+AND
+ Rule "VZEPS_079" multiple times "lna" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is equal to "C,V"
+		
+AND
+ Rule "VZEPS_079" multiple times "sdp" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is equal to "M"
+		
+AND
+ Rule "VZEPS_079" multiple times_the "2" position of "ltos" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]" is equal to values "L"
+End Brace
+
+	then
+ 	 	 the rule "VZEPS_079" with error code "VZEPS198" with message "ECCKT IS REQURIED" for the field "ecckt" of section "/xml/localservicerequest/portserviceform/servicedetailsection[i]"
+end

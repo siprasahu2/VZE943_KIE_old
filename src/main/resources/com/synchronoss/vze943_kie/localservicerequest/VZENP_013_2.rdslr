@@ -1,0 +1,44 @@
+package com.synchronoss.vze943_kie.localservicerequest;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZENP_013_2" dialect "mvel" ruleflow-group "NP_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/numberportabilityform" is exists 
+		
+AND
+ The_Rule "VZENP_013_2" multiple times "portednbr" in "/xml/localservicerequest/numberportabilityform/servicedetailsection[i]" is populated
+		
+AND
+ Rule "VZENP_013_2" multiple times "portednbr" in "/xml/localservicerequest/numberportabilityform/servicedetailsection[i]" matches_the_pattern "[0-9]{10,10}-[0-9]{4,4}"
+		
+AND
+ the "12" to "15" position of Rule "VZENP_013_2" multiple times "portednbr" in "/xml/localservicerequest/numberportabilityform/servicedetailsection[i]" is less than or equal to "7" to "10" position
+End Brace
+
+ 	 then
+ 	 	 the rule "VZENP_013_2" with error code "VZENP087" with message "A RANGE OF NUMBERS MUST BE CONSECUTIVE" for the field "portednbr" of section "/xml/localservicerequest/numberportabilityform/servicedetailsection[i]"
+end

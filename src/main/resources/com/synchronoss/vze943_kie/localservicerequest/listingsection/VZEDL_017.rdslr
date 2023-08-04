@@ -1,0 +1,50 @@
+package com.synchronoss.vze943_kie.localservicerequest.listingsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEDL_017" dialect "mvel" ruleflow-group "DL_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/directorylistingform" is exists 
+		
+AND
+ The_Rule "VZEDL_017" multiple times "listingcontrolsection/ali" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is_not populated
+		
+AND
+ Rule "VZEDL_017" multiple times "listingcontrolsection/lact" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is equal to "D,I,Z"
+		
+AND
+ The_Rule "VZEDL_017" multiple times "listingcontrolsection/rty" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is populated
+		
+AND
+ Rule "VZEDL_017" multiple times "listingcontrolsection/rty" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is not equal to "LML"
+		
+AND
+ Any occurrence of "state" in "/xml/localservicerequest/enduserform/locationsection" is_not equal to "NY"
+End Brace
+
+ 	 then
+ 	 	 the rule "VZEDL_017" with error code "VZEDL314" with message "ALI REQUIRED WHEN LACT IS D, I OR Z AND RTY NOT EQUAL TO  LML AND STATE IS NOT NY" for the field "listingcontrolsection/ali" of section "/xml/localservicerequest/directorylistingform/listingsection[i]"
+end

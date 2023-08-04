@@ -1,0 +1,41 @@
+package com.synchronoss.vze943_kie.localservicerequest.resaleserviceform;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZERS_009" dialect "mvel" ruleflow-group "RS_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/resaleserviceform" is exists 
+		
+AND
+ The_Rule "VZERS_009" multiple times "npi" in "/xml/localservicerequest/resaleserviceform/servicedetailsection[i]" is_not populated
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/npdi" is equal to values "B,D"
+End Brace
+
+	then
+ 	 	 the rule "VZERS_009" with error code "VZERS009" with message "NPI IS REQUIRED" for the field "npi" of section "/xml/localservicerequest/resaleserviceform/servicedetailsection[i]"
+end

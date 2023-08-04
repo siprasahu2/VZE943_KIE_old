@@ -1,0 +1,62 @@
+package com.synchronoss.vze943_kie.localservicerequest.lsrform.adminsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZELSR_104" dialect "mvel" ruleflow-group "LSR_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the "/xml/localservicerequest/lsrform/adminsection/chc" is populated
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/reqtyp" not_equals "AB"
+		
+AND
+ 
+Start Brace
+ the "/xml/localservicerequest/lsrform/adminsection/act" is populated 
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/act" not_equals "V"
+End Brace
+
+		
+AND
+ Any occurrence of "lna" in "/xml/localservicerequest/loopserviceform/servicedetailsection" is_not equal to "V"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/sli" not_equals "S"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/sli" is populated
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/tos" is populated
+		
+AND
+ it is  not true that_the 2 position of "/xml/localservicerequest/lsrform/adminsection/tos" is equal to "F"
+End Brace
+
+ 	 then
+ 	 	 the error code "VZELSR234" with message "COORDINATED HOT CUT IS PROHIBITED WHEN REQTYP NOT AB, ACT NOT V AND LNA NOT V"  for the field "/xml/localservicerequest/lsrform/adminsection/chc"
+end

@@ -1,0 +1,47 @@
+package com.synchronoss.vze943_kie.localservicerequest;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZELSNP_042" dialect "mvel" ruleflow-group "LSNP_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/loopservicewithnumberportabilityform" is exists 
+		
+AND
+ The_Rule "VZELSNP_042" multiple times "cti" in "/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection[i]" is populated
+		
+AND
+ Any occurrence of "state" in "/xml/localservicerequest/enduserform/locationsection" is equal to "CT,NY,MA,VT,NH,RI,ME"
+		
+AND
+ The_Rule "VZELSNP_042" multiple times "cableid" in "/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection[i]" is_not populated
+		
+AND
+ The_Rule "VZELSNP_042" multiple times "chanpair" in "/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection[i]" is_not populated
+End Brace
+
+	then
+ 	 	 the rule "VZELSNP_042" with error code "VZELSNP137" with message "CTI REQUIRES CABLE ID AND CHAN/PAIR" for the field "cti" of section "/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection[i]"
+end

@@ -1,0 +1,54 @@
+package com.synchronoss.vze943_kie.localservicerequest.lsrform.adminsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEForm-4" dialect "mvel" ruleflow-group "FORM_RULES"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the "/xml/localservicerequest/lsrform/adminsection/reqtyp" equals "BB" 
+		
+AND
+ 
+Start Brace
+it is not true that_there is no "/xml/localservicerequest/loopserviceform" section
+				
+OR
+ it is not true that_there is no "/xml/localservicerequest/numberportabilityform" section
+				
+OR
+ it is not true that_there is no "/xml/localservicerequest/huntingform" section
+				
+OR
+ it is not true that_there is no "/xml/localservicerequest/portserviceform" section
+				
+OR
+ it is not true that_there is no "/xml/localservicerequest/resaleserviceform" section
+End Brace
+
+End Brace
+
+	 then
+ 	 	 the error code "VZE003" with message "LS, HGI, RS, PS AND NP FORMS NOT ALLOWED FOR REQTYP BB"  for the field "/xml/localservicerequest/lsrform/adminsection/reqtyp"
+end

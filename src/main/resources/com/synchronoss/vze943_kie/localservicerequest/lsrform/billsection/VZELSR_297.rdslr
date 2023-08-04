@@ -1,0 +1,74 @@
+package com.synchronoss.vze943_kie.localservicerequest.lsrform.billsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZELSR_297" dialect "mvel" ruleflow-group "LSR_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the "/xml/localservicerequest/lsrform/billsection/bi1" is populated
+		
+AND
+ the "/xml/localservicerequest/lsrform/billsection/bi1" not_equals "D"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/reqtyp" equals "JB"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/act" equals "V"
+		
+AND
+ the "/xml/localservicerequest/lsrform/billsection/bi2" is populated
+		
+AND
+ the "/xml/localservicerequest/lsrform/billsection/bi2" not_equals "D"
+		
+AND
+ 
+Start Brace
+
+Start Brace
+Any_occurrence_of "mltn" in "/xml/localservicerequest/enduserform/migratinglistingtns" is_not_equal_to_field "/xml/localservicerequest/lsrform/billsection/ban1"
+		
+AND
+ the "/xml/localservicerequest/lsrform/billsection/ban1" is populated 
+End Brace
+
+		
+OR
+ 
+Start Brace
+Any_occurrence_of "mltn" in "/xml/localservicerequest/enduserform/migratinglistingtns" is_not_equal_to_field "/xml/localservicerequest/lsrform/billsection/ban2"
+		
+AND
+ the "/xml/localservicerequest/lsrform/billsection/ban1" is populated
+End Brace
+
+End Brace
+
+End Brace
+
+ 	 then
+ 	 	 the error code "VZELSR296" with message "BILLING ACCOUNT NUMBER IDENTIFIER 1 MUST BE D WHEN THE BAN1 OR BAN2 FIELD DOES NOT EQUAL THE END USER MLTN AND BI2 IS NOT EQUAL TO D"  for the field "/xml/localservicerequest/lsrform/billsection/bi1"
+end

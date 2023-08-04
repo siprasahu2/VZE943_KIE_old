@@ -1,0 +1,6650 @@
+package com.synchronoss.vze943_kie.localservicerequest.portserviceform.tctosection;
+
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.Populated;
+import java.util.regex.Pattern;
+import java.util.ArrayList;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+import com.synchronoss.brms.dresclasses.ThoroughFareHelper;
+
+
+expander VZE943_KIE.dsl
+
+
+//@@@@@@@@@@@@@@@@@@@@ RuleFlow Rules @@@@@@@@@@@@@@@@@@@@@//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//@@@@@@@@ Function sets to support multiple fields rules @@@@@@@@@@@@@@@@@@@//
+
+function void logMultipleError(XOMContainerBean xcb,String ruleid, String section, String field, String errorCode, String errorMessage)
+    {
+	
+	ArrayList errorListIndex = (ArrayList) (xcb.getErrorListIndexMap()).get(ruleid);
+	if (errorListIndex != null && errorListIndex.size() > 0)
+	{
+	    for (int i = 0; i < errorListIndex.size(); i++)
+	    {
+	    if(section.contains("[i]/"))
+	    {
+	    	ArrayList temp=new ArrayList();
+	    	temp=(ArrayList)errorListIndex.get(i);
+	    	String section1=null;
+			String section2=null;
+			String section12=null;
+			int pos1,pos2;
+			pos1=section.indexOf("[i]/");
+			pos2=section.lastIndexOf("[i]");
+			section1=section.substring(0,pos1);
+			section2=section.substring(pos1+4,pos2);
+			section12=section1 + "[" + temp.get(0) + "]/" + section2;
+			String xpath = section12 + "[" + temp.get(1) + "]/" + field;
+			xcb.logError(errorCode, errorMessage, xpath);
+	    }
+	    else
+	    {
+
+	    	int pos1;
+	    	String section1=null;
+	    	pos1=section.indexOf("[i]");
+			section1=section.substring(0,pos1);
+			String xpath = section1 + "[" + errorListIndex.get(i) + "]/" + field;
+	    	xcb.logError(errorCode, errorMessage, xpath);
+	    }
+	    }
+	}
+	(xcb.getErrorListIndexMap()).remove(ruleid);
+   }
+
+  function boolean compare(XOMContainerBean xcb,int compareType, String ruleid, String section, String field, String parameter, String val2, String position1, String position2)
+    {
+    	
+    	ArrayList errorListIndex = new ArrayList();
+    	ArrayList errorListIndexTemp1 = new ArrayList();
+    	ArrayList errorListIndexTemp2 = new ArrayList();
+    	int CT=compareType;
+    	String param=parameter;
+    	boolean finalFlag = false;
+    	if(section.contains("[i]/"))
+    	{
+    		String section1=null;
+    		String section2=null;
+    		String section12=null;
+    		int pos1,pos2;
+    		pos1=section.indexOf("[i]/");
+    		pos2=section.lastIndexOf("[i]");
+    		section1=section.substring(0,pos1);
+    		section2=section.substring(pos1+4,pos2);
+    		XOMAccessBean accessBean1 = xcb.xpath(section1);
+    		XOMContainerBean[] arr1;
+    		arr1 = accessBean1.nodeSet();
+    		XOMAccessBean accessBean2 =null;
+    		for (int i = 0; i < arr1.length; i++)
+    		{
+    			section12=section1 + "[" + (i + 1) + "]/" + section2;
+    			accessBean2 = xcb.xpath(section12);
+    			XOMContainerBean[] arr2;
+    			arr2 = accessBean2.nodeSet();
+    			for(int j = 0; j < arr2.length; j++)
+    			{
+    				boolean flag = false;
+    				XOMContainerBean xBean = arr2[j];
+    				
+    				String xpath = section12 + "[" + (j + 1) + "]/" + field;
+    				String content = xBean.xpath(xpath).stringValue();
+    				
+    				flag=MultiRules(CT,xpath,content,param,val2,position1,position2);
+	    
+	    
+    				if (flag)
+    				{
+    					ArrayList temp=new ArrayList();
+    					temp.add(i+1);
+    					temp.add(j+1);
+    					errorListIndex.add(temp);
+    					finalFlag = true;
+    				}
+    			}
+    			accessBean2 =null;
+		}
+	}
+	else
+	{
+		int pos1;
+		String section1=null;
+		section1=section.replace("[i]", "");
+		XOMAccessBean accessBean = xcb.xpath(section1);
+		XOMContainerBean[] arr;
+		arr = accessBean.nodeSet();
+		for (int i = 0; i < arr.length; i++)
+		{
+		    boolean flag = false;
+		    XOMContainerBean xBean = arr[i];
+		    
+		    String xpath = section1 + "[" + (i + 1) + "]/" + field;
+		    String content = xBean.xpath(xpath).stringValue();
+		    flag=MultiRules(CT,xpath,content,param,val2,position1,position2);
+			
+		    if (flag)
+		    {
+			errorListIndex.add(i + 1);
+			finalFlag = true;
+		    }
+		}
+	}
+	
+	
+	errorListIndexTemp1=(ArrayList)((xcb.getErrorListIndexMap()).get(ruleid));
+	
+	errorListIndexTemp2=(ArrayList)errorListIndex.clone();
+	
+	if(errorListIndexTemp1!=null)
+	{
+		if(errorListIndexTemp1.isEmpty())
+		{
+			errorListIndex=(ArrayList)errorListIndexTemp1.clone();
+		}
+		else
+		{
+			ArrayList errorListIndexTemp3 = new ArrayList();
+			for(int i = 0;i < errorListIndexTemp1.size();i++){
+				for(int j = 0;j < errorListIndexTemp2.size();j++){
+					if(errorListIndexTemp1.get(i).equals(errorListIndexTemp2.get(j))){
+						errorListIndexTemp3.add(errorListIndexTemp1.get(i));
+						
+					}
+				}
+					errorListIndex=(ArrayList)errorListIndexTemp3.clone();
+			}
+		}
+	}
+	
+	if (finalFlag)
+	{
+		(xcb.getErrorListIndexMap()).put(ruleid,errorListIndex);
+	}
+	return finalFlag;
+    }
+    function boolean MultiRules(int compareType, String xpath, String content, String parameter, String val2, String position1, String position2)
+    {
+     boolean flag=false;
+     	
+     switch (compareType)
+	    {
+	    case 1:
+		if((parameter != null) && ((new Equals()).isEqualToValues(content,parameter)))
+		{
+		    // log.debug("EQUALS");
+		    flag = true;
+		}
+		break;
+	    case 2:
+		if ((parameter != null) && (!((new LengthCheck()).checkMaximumlength(content,Integer.parseInt(parameter)))))
+		{
+		    // log.debug("LENGTH IS GREATER");
+		    flag = true;
+		}
+		break;
+	    case 3:
+	    	if((parameter == null) || (!(new Equals()).isEqualToValues(content,parameter)))
+		{
+		    // log.debug("CHARACTERS DOES NOT MATCH");
+		    flag = true;
+		}
+		break;
+	    case 4:if((new Populated()).isNotPopulated(content))
+		{
+		   // log.debug("FIELD NOT POPULATED");
+		    flag = true;
+		}
+		break;
+	    case 5:
+		if ((new Populated()).isPopulated(content))
+		{
+		   // log.debug("FIELD POPULATED");
+		    flag = true;
+		}
+		break;
+	    case 6:
+		if ((parameter != null) && (!((new DatatypeCheck()).checkAlphaSPSet(content,parameter))))
+		{
+			// log.debug("FIELD IS NOT ALPHA WITH SPECIAL CHARS");
+		    flag = true;
+		}
+		break;
+	    case 7:
+		if (!((new DatatypeCheck()).checkNumeric(content)))
+		{
+		    // log.debug("FIELD IS NOT NUMERIC");
+		    flag = true;
+		}
+		break;
+	    case 8:
+		if (!((new DatatypeCheck()).checkAlphaNumeric(content)))
+		{
+			    // log.debug("FIELD IS NOT ALPHANUMERIC");
+			  flag = true;
+		}
+		break;
+	    case 9:
+			if ((parameter != null) && (!((new LengthCheck()).checkLength(content,Integer.parseInt(parameter)))))
+			{
+				    // log.debug("FIELD LENGTH CHECK");
+				  flag = true;
+			}
+			break;
+	    case 10:
+	    	if ((parameter != null) && (!((new TNFormat()).tnFormatIs(content,parameter))))
+			{
+				    // log.debug("TELEPHONE NUM FORMAT");
+				  flag = true;
+			}
+			break;
+			case 11:
+			if (!((new DatatypeCheck()).checkAlpha(content)))
+			{
+				    // log.debug("FIELD IS NOT ALPHA");
+				  flag = true;
+			}
+			break;
+			
+	    case 12:
+			if ((parameter != null) && (!((new DatatypeCheck()).checkAlphaNumericSPSet(content,parameter))))
+			{
+				// log.debug("FIELD IS ALLOW ALPHANUM WITH SPECIAL CHARS");
+			    flag = true;
+			}
+			break;
+	    case 13:
+			if ((parameter != null) && (((new LengthCheck()).checkLength(content,Integer.parseInt(parameter)))))
+			{
+				    // log.debug("FIELD LENGTH CHECK");
+				  flag = true;
+			}
+			break;
+	    case 14:
+			if ((new DatatypeCheck()).checkAlphaNumeric(content))
+			{
+				    // log.debug("FIELD IS ALPHANUMERIC");
+				  flag = true;
+			}
+			break;
+	    case 15:
+			if ((new DatatypeCheck()).checkNumeric(content))
+			{
+			    // log.debug("FIELD IS NOT NUMERIC");
+			    flag = true;
+			}
+			break;
+	    case 16:
+			if ((new DatatypeCheck()).checkAlpha(content))
+			{
+				    // log.debug("FIELD IS ALPHA");
+				  flag = true;
+			}
+			break;
+	    case 17:
+			if((parameter != null) && ((new Equals()).isGreaterThan(content,Integer.parseInt(parameter))))
+		    {
+			    // log.debug("GREATER THAN");
+			    flag = true;
+			}
+			break;
+	    case 18:
+	    	if((parameter != null) && ((new Contains()).characterNotPreceededAndFollowedByNumeric(content,parameter)))
+		    {
+			    // log.debug("NUMBERS WITH SPECIAL CHAR");
+			    flag = true;
+			}
+			break;
+	    case 19:
+	    	if((parameter != null) && ((new Contains()).contains(content,parameter)))
+		    {
+			    // log.debug("CONTAINS CHAR");
+			    flag = true;
+			}
+			break;
+	    case 20:
+	    	if((parameter != null) && (content!="") && (!((new Contains()).characterFollowedByAlpha(content,parameter))))
+		    {
+			    // log.debug("CONTAINS CHAR FOLLOWED BY ALPHA");
+			    flag = true;
+			}
+			break;
+	    case 21:
+	    	if((parameter != null)&& (content!="") && ((new Contains()).characterPreceededAndFollowedByAlpha(content,parameter)))
+		    {
+			    // log.debug("CONTAINS CHAR PRECEEDED AND FOLLOWED BY ALPHA");
+			    flag = true;
+			}
+			break;
+	    case 22:
+	    	if((parameter != null)  && (content!="") && (!((new Contains()).characterPreceededAndFollowedByAlphaNumeric(content,parameter))))
+		    {
+			    // log.debug("CONTAINS CHAR PRECEEDED AND FOLLOWED BY ALPHANUM");
+			    flag = true;
+			}
+			break;
+	    case 23:
+	    	if((parameter != null) && (content!="") && (!((new Contains()).characterFollowedBySpace(content,parameter.charAt(0)))))
+		    {
+			    // log.debug("CONTAINS CHAR FOLLOWED BY SPACE");
+			    flag = true;
+			}
+			break;
+	    case 24:
+	    	if((new Contains()).checkSingleParanthesis(content))
+		    {
+			    // log.debug("CONTAINS SINGLE (");
+			    flag = true;
+			}
+			break;
+	    case 25:
+	    	if(!((new SpaceCheck()).isAmpersandprecspace(content)))
+		    {
+			    // log.debug("CONTAINS AMPERSAND AND SPACE");
+			    flag = true;
+			}
+			break;
+	    case 26:
+	    	if((new Contains()).doubleVirgleNotPreceededAndFollowedByAlphaNumeric(content))
+		    {
+			    // log.debug("CONTAINS VIRGLE NOT ALPHANUM ");
+			    flag = true;
+			}
+			break;
+	    case 27:
+	    		if(!((new Position()).positionOftagValueEqualToValues(Integer.parseInt(position1), content, parameter)))
+	    		{
+	    			
+					flag = true;
+	    		}
+	    		break;
+		    case 28:
+				if(!((new RangeOfValues()).twoFieldPositionInRange(Integer.parseInt(position1), Integer.parseInt(position2), content, Integer.parseInt(parameter), Integer.parseInt(val2))))
+				{
+				    flag = true;
+				}
+				break;
+		    case 29:
+					
+				if((new Position()).positionOftagValueEqualToValues(Integer.parseInt(position1), content, parameter))
+				{
+				    //System.out.println("Pos:"+Integer.parseInt(position1)+"\t Content:"+content+"\tvalue:"+parameter);
+					flag = true;
+				}
+				break;
+		    case 30:
+				if(!((new Position()).twoPositionValueofTagEqualToValues(Integer.parseInt(position1), Integer.parseInt(position2), content, parameter)))
+				{
+				    flag = true;
+				}
+				break;
+		    case 31:
+				if((new Position()).posToPosOfTagIsLessThanOrEqualToPosToPos(Integer.parseInt(position1), Integer.parseInt(position2), content, Integer.parseInt(parameter), Integer.parseInt(val2)))
+				{
+				    flag = true;
+				}
+				break;
+			case 32:
+			if ((parameter != null) && (!((new DatatypeCheck()).checkAlphaNumericWithOutSPSet(content,parameter))))
+			{
+				// log.debug("FIELD IS NOT ALPHANUM WITH SPECIAL CHARS");
+			    flag = true;
+			}
+			break;
+			case 33:
+			if ((parameter != null) && ((new SpecialFormat()).isPatternMatches(content,parameter)))
+			{
+				// log.debug("FIELD IS MATCHING THE PATTERN");
+			    flag = true;
+			}
+			break;
+			case 34:
+			if ((parameter != null) && ((new SpecialFormat()).isPatternNotMatches(content,parameter)))
+			{
+				// log.debug("FIELD IS NOT MATCHING THE PATTERN");
+			    flag = true;
+			}
+			break;
+			case 35:
+			if ((parameter != null) && (!((new SpecialFormat()).isPatternNotMatches(content,parameter))))
+			{
+				// log.debug("FIELD IS NOT MATCHING THE PATTERN");
+			    flag = true;
+			}
+			break;
+			case 36:
+			if ((parameter != null) && (((new DateCheck()).isLessThanOrEqualTo(content,parameter))))
+			{
+				
+			    flag = true;
+			}
+			break;
+			case 37:
+			if ((parameter != null) && (!((new DateFormatCheck()).dateCheck(content,parameter))))
+			{
+				
+			    flag = true;
+			}
+			break;
+			case 38:
+			if ((parameter != null) && (!((new DatatypeCheck()).checkRepeationOFSpecialCharacter(content,parameter))))
+			{
+				
+			    flag = true;
+			}
+			break;
+			case 39:
+	    	if((parameter != null) && (!(new Contains()).contains(content,parameter)))
+		    {
+			    // log.debug("CONTAINS CHAR");
+			    flag = true;
+			}
+			break;
+			case 40:
+	    	if((parameter != null) && (FieldIsInRangeBWtwoValues(content,parameter,val2)))
+		    {
+			    // log.debug("CONTAINS CHAR");
+			    flag = true;
+			}
+			break;
+			case 41:
+	    	if((parameter != null) && (!(FieldIsInRangeBWtwoValues(content,parameter,val2))))
+		    {
+			    // log.debug("CONTAINS CHAR");
+			    flag = true;
+			}
+			break;
+			case 42:
+	    	if((parameter == null) || ((new Equals()).isEqualToValues(content,parameter)))
+			{
+				// log.debug("CHARACTERS DOES NOT MATCH");
+				flag = true;
+			}
+			break;
+		default:
+
+    }
+   
+ 	return flag;
+    }
+    
+   
+    
+    function boolean multiEquals(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare) 
+    {
+	return compare(xcb, 1, ruleid, section, field, valueToCompare,null,null,null);
+    }
+
+    function boolean moMaxLength(XOMContainerBean xcb, String ruleid, String section, String field, String lenghtValue)
+    {
+	return compare(xcb, 2, ruleid, section, field, lenghtValue,null,null,null);
+    }
+
+    function boolean multiNotEquals(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 3, ruleid, section, field, valueToCompare,null,null,null);
+    }
+
+    function boolean moNotExists(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 4, ruleid, section, field, null,null,null,null);
+    }
+
+    function boolean moExists(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 5, ruleid, section, field, null,null,null,null);
+    }
+    
+    function boolean AlphaSpecialChar(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 6, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean isNotNumber(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 7, ruleid, section, field, null,null,null,null);
+    }
+    
+    function boolean isNotAlphaNumeric(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 8, ruleid, section, field, null,null,null,null);
+    }
+    
+    function boolean LengthNotValue(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 9, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean TelNumFormat(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 10, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean isNotAlpha(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 11, ruleid, section, field, null,null,null,null);
+	}
+	
+    function boolean AlphaNumNotSpecialChar(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 12, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean LengthValue(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 13, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean isAlphaNumeric(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 14, ruleid, section, field, null,null,null,null);
+    }
+    
+    function boolean isNumber(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 15, ruleid, section, field, null,null,null,null);
+    }
+    
+    function boolean isAlpha(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 16, ruleid, section, field, null,null,null,null);
+    }
+    
+    function boolean isGreaterThan(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 17, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean characterPreceededOrFollowedByNumeric(XOMContainerBean xcb, String ruleid, String section, String field,String valueToCompare)
+    {
+	return compare(xcb, 18, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean containsfun(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 19, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean characterFollowedByAlpha(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 20, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean characterPreceededAndFollowedByAlpha(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 21, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean characterPreceededAndFollowedByAlphaNumeric(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 22, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean characterFollowedBySpace(XOMContainerBean xcb, String ruleid, String section, String field,String valueToCompare)
+    {
+	return compare(xcb, 23, ruleid, section, field, valueToCompare,null,null,null);
+    }
+    
+    function boolean checkSingleParanthesis(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 24, ruleid, section, field, null,null,null,null);
+    }
+    
+    function boolean isAmpersandprecspace(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 25, ruleid, section, field, null,null,null,null);
+    }
+    
+    function boolean doubleVirgleNotPreceededAndFollowedByAlphaNumeric(XOMContainerBean xcb, String ruleid, String section, String field)
+    {
+	return compare(xcb, 26, ruleid, section, field, null,null,null,null);
+    }
+    
+    function boolean PositionValue(XOMContainerBean xcb, String ruleid, String section, String field, String pos, String valueToCompare)
+    {
+	return compare(xcb,27, ruleid, section, field, valueToCompare, null, pos, null);
+    }
+    
+    function boolean Positions1n2Values(XOMContainerBean xcb, String ruleid, String section, String field, String pos1, String pos2, String val1, String val2)
+    {
+	return compare(xcb,28, ruleid, section, field, val1, val2, pos1, pos2);
+    }
+    
+    function boolean PositionValueEqual(XOMContainerBean xcb, String ruleid, String section, String field, String pos,String valueToCompare)
+    {
+	return compare(xcb,29, ruleid, section, field,  valueToCompare, null, pos, null);
+    }
+    
+    function boolean Positions1n2Equals(XOMContainerBean xcb, String ruleid, String section, String field, String pos1, String pos2, String valueToCompare)
+    {
+	return compare(xcb,30, ruleid, section, field, valueToCompare, null, pos1, pos2);
+    }
+   
+    function boolean posToPosOfTagIsLessThanOrEqualToPosToPos(XOMContainerBean xcb, String ruleid, String section, String field, String pos1, String pos2, String pos3, String pos4)
+    {
+	return compare(xcb,31, ruleid, section, field, pos3, pos4, pos1, pos2);
+    }
+    
+	function boolean AlphaNumSpecialChar(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 32, ruleid, section, field, valueToCompare,null,null,null);
+    }
+	
+	
+	function boolean multiplepatternmatches(XOMContainerBean xcb, String ruleid, String section, String field, String pattern)
+    {
+	return compare(xcb, 33, ruleid, section, field, pattern,null,null,null);
+    }
+	
+	function boolean multiplepatternNotmatches(XOMContainerBean xcb, String ruleid, String section, String field, String pattern)
+    {
+	return compare(xcb, 34, ruleid, section, field, pattern,null,null,null);
+    }
+	
+	function boolean negatemultiplepatternNotmatches(XOMContainerBean xcb, String ruleid, String section, String field, String pattern)
+    {
+	return compare(xcb, 35, ruleid, section, field, pattern,null,null,null);
+    }
+	
+	function boolean datefieldislessthanOrEqualfield(XOMContainerBean xcb, String ruleid, String section, String field1, String field2)
+    {
+	return compare(xcb, 36, ruleid, section, field1, field2,null,null,null);
+    }
+	
+	function boolean notValidDateFormat(XOMContainerBean xcb, String ruleid, String section, String field1, String format)
+    {
+	return compare(xcb, 37, ruleid, section, field1, format,null,null,null);
+    }
+	
+	function boolean not_checkRepeationOFSpecialCharacter(XOMContainerBean xcb, String ruleid, String section, String field1, String format)
+    {
+	return compare(xcb, 38, ruleid, section, field1, format,null,null,null);
+    }
+	function boolean notcontainsfun(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 39, ruleid, section, field, valueToCompare,null,null,null);
+    }
+	
+	function boolean FieldIsInRangeBWtwoValues1(XOMContainerBean xcb, String ruleid, String section, String field, String value1, String value2)
+    {
+	return compare(xcb, 40, ruleid, section, field, value1,value2,null,null);
+    }
+	
+	function boolean NotFieldIsInRangeBWtwoValues1(XOMContainerBean xcb, String ruleid, String section, String field, String value1, String value2)
+    {
+	return compare(xcb, 41, ruleid, section, field, value1,value2,null,null);
+    }
+	
+	function boolean multiNotEqualsField(XOMContainerBean xcb, String ruleid, String section, String field, String valueToCompare)
+    {
+	return compare(xcb, 42, ruleid, section, field, valueToCompare,null,null,null);
+    }
+
+//##################### Function sets #####################
+
+function void Fun_EU_SATHTableNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/enduserform/locationsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+   ArrayList tmpArr=new ArrayList();
+   for(int i = 0; i < arr.length; i++)
+   {
+		String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("sath").toString();
+		String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("state").toString();
+		
+		
+
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))
+			&& (!((new ThoroughFareHelper()).fetchAbbreviationName(((xcb.xpath(xpath1)).stringValue()),((xcb.xpath(xpath2)).stringValue())))))
+            {
+				xcb.logError(ecode, emsg, xpath1);
+             
+            }
+            
+   }
+  }
+ }
+  catch(Exception e)
+ { }
+}
+
+function boolean Fun_checkForCancelordervze(XOMContainerBean xcb, String ponXpath, String ccnaXpath )
+{
+	try{
+		boolean flag=false;
+		String completexml=xcb.getXmlInstance();
+		String pon=xcb.xpath(ponXpath).stringValue();
+		String ccna=xcb.xpath(ccnaXpath).stringValue();
+		SupplementOrderCheck soc = new SupplementOrderCheck(completexml);
+		flag=soc.checkForCancelordervze(pon,ccna);	
+		return flag;
+	}
+ catch(Exception e)
+{ 
+	return false; 
+	}
+}
+
+function boolean Fun_checkRequestExistsInDatabaseforVZE(XOMContainerBean xcb, String ponXpath, String verXpath, String ccnaXpath )
+{
+	try{
+		boolean flag=false;
+		String completexml=xcb.getXmlInstance();
+		String pon=xcb.xpath(ponXpath).stringValue();
+		String ver=xcb.xpath(verXpath).stringValue();
+		String ccna=xcb.xpath(ccnaXpath).stringValue();
+		SupplementOrderCheck soc = new SupplementOrderCheck(completexml);
+		flag=soc.checkForDuplicateOrder(pon,ver,ccna);	
+		return flag;
+	}
+ catch(Exception e)
+{ 
+	return false; 
+	}
+}
+// START ......................................//
+
+function boolean Fun_checkVerChangeOrder(XOMContainerBean xcb, String ponXpath, String verXpath, String ccnaXpath )
+{
+	try{
+
+		boolean flag=false;
+		String completexml=xcb.getXmlInstance();
+		String pon=xcb.xpath(ponXpath).stringValue();
+		String ver=xcb.xpath(verXpath).stringValue();
+		String ccna=xcb.xpath(ccnaXpath).stringValue();
+		SupplementOrderCheck soc = new SupplementOrderCheck(completexml);
+		flag=soc.verCheckForPrevXml(pon,ver,ccna);
+		return flag;
+		}
+		
+	catch(Exception e){ 
+		return false; 
+	}
+}
+
+
+//END...............................................//
+
+
+function void Fun_DL_RTYMultipleLACT(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/directorylistingform/listingsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+   ArrayList tmpArr=new ArrayList();
+   for(int i = 0; i < arr.length; i++)
+   {
+		String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listingcontrolsection/rty").toString();
+		String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listingcontrolsection/lact").toString();
+		
+		
+
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath(xpath1)).stringValue()),"LML"))
+			&& (((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))
+			&& ((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"D"))
+			&& ((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"I")))
+			&& (((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/act")).stringValue()))
+			&& ((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/act")).stringValue()),"D"))))
+            {
+			tmpArr.add(xpath1);
+             
+            }
+         
+         
+   }
+   if(tmpArr.size()>1)
+   {
+   int i=0;
+		while(i<tmpArr.size())
+		{
+			if(i!=tmpArr.size()-1)
+				xcb.logError(ecode, emsg, tmpArr.get(i).toString());
+			i=i+2;
+		}
+   
+   }
+  }
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_CTIMultiple(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+   for(int i = 0; i < arr.length; i++)
+   {
+		String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+		String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("systemid").toString();
+		String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("shelf").toString();
+		String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("chanpair").toString();
+		
+		
+
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath(xpath1)).stringValue()),"B"))
+			&& (((((new Populated()).isNotPopulated((xcb.xpath(xpath2)).stringValue()))
+			&& ((new Populated()).isNotPopulated((xcb.xpath(xpath3)).stringValue()))
+			&& ((new Populated()).isNotPopulated((xcb.xpath(xpath4)).stringValue()))))
+			|| EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","MD,VA,DC,DE,PA,NJ")))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         
+         
+   }
+  }
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_EU_DIRQTYNCMultipleOTHER(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/directorylistingform/dsrdeliveryinfo";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+		 
+		 String section2=(new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("directoryquantity").toString();
+		 XOMAccessBean accessBean1 = xcb.xpath(section2);
+		 XOMContainerBean arr1[] = accessBean1.nodeSet();
+		 int count=0;
+		 
+		 if(arr1.length>0)
+		 {
+		 for(int j=0;j<arr1.length;j++)
+		 {
+		 
+          String xpath2 = (new StringBuilder(String.valueOf(section2))).append("[").append(j + 1).append("]/").append("dirqtync").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))
+			&& ((((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))
+			&& ((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/act")).stringValue()),"N,T")))
+			|| (((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/reqtyp")).stringValue()),"JB"))
+			&& ((EachOccOfFieldIsNotEqualValues(xcb,"/xml/localservicerequest/directorylistingform/listingsection","listingcontrolsection/lact","N"))))
+			|| (!(EachOccOfFieldIsEqualValues(xcb, "/xml/localservicerequest/directorylistingform/listingsection", "listingcontrolsection/rty", "LML")))))
+			{
+			xcb.logError(ecode, emsg, xpath2);
+			
+         }
+		 }
+		 
+         }
+		 
+   }
+  
+ }
+ 
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_DL_LACTMultipleOther(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/directorylistingform/listingsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+   for(int i = 0; i < arr.length; i++)
+   {
+		String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listingcontrolsection/lact").toString();
+		String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listinginstructionsection/ltn").toString();
+		String ltn=(xcb.xpath(xpath2)).stringValue();
+
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isNotEqualToValues(((xcb.xpath(xpath1)).stringValue()),"D"))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/reqtyp")).stringValue()),"CB"))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/act")).stringValue()),"V"))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/numberportabilityform/servicedetailsection","lna","D"))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/numberportabilityform/servicedetailsection","portednbr",ltn)))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         
+         
+   }
+  }
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_DL_LACTMultiple(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/directorylistingform/listingsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+   for(int i = 0; i < arr.length; i++)
+   {
+		String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listingcontrolsection/lact").toString();
+		String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listinginstructionsection/ltn").toString();
+		String ltn=(xcb.xpath(xpath2)).stringValue();
+
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isNotEqualToValues(((xcb.xpath(xpath1)).stringValue()),"D"))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/reqtyp")).stringValue()),"BB"))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/act")).stringValue()),"V"))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection","lna","D"))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection","portednbr",ltn)))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         
+         
+   }
+  }
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_EU_TCIDMultipleOTHER(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/enduserform/disconnectsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+		 String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("tcopt").toString();
+		 if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath(xpath1)).stringValue()),"T")))
+		{
+		 String section2=(new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("tctosection").toString();
+		 XOMAccessBean accessBean1 = xcb.xpath(section2);
+		 XOMContainerBean arr1[] = accessBean1.nodeSet();
+		 int count=0;
+		 
+		 if(arr1.length>0)
+		 {
+		 for(int j=0;j<arr1.length;j++)
+		 {
+		 
+          String xpath2 = (new StringBuilder(String.valueOf(section2))).append("[").append(j + 1).append("]/").append("tcid").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue())))
+			{
+			count++;
+			
+         }
+		 }
+		 
+         }
+		 
+		 
+		 String tmpPath=(new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("tctosection[1]/tcid").toString();
+		 if(count!=2 && count!=0)
+		 xcb.logError(ecode, emsg, tmpPath);
+   }
+  
+ }
+ }
+ }
+  catch(Exception e)
+ { }
+}
+
+
+function void Fun_EU_TCNAMEMultipleOTHER(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/enduserform/disconnectsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+		 String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("tcopt").toString();
+		 if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath(xpath1)).stringValue()),"T")))
+		{
+		 String section2=(new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("tctosection").toString();
+		 XOMAccessBean accessBean1 = xcb.xpath(section2);
+		 XOMContainerBean arr1[] = accessBean1.nodeSet();
+		 int count=0;
+		 
+		 if(arr1.length>0)
+		 {
+		 for(int j=0;j<arr1.length;j++)
+		 {
+		 
+          String xpath2 = (new StringBuilder(String.valueOf(section2))).append("[").append(j + 1).append("]/").append("tcname").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue())))
+			{
+			count++;
+			
+         }
+		 }
+		 
+         }
+		 
+		 
+		 String tmpPath=(new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("tctosection[1]/tcname").toString();
+		 if(count!=2 && count!=0)
+		 xcb.logError(ecode, emsg, tmpPath);
+   }
+  
+ }
+ }
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_PS_TNSMultiple(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/portserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+		int count=0;
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("tns").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath(xpath1)).stringValue()),"A")))
+            {
+             count++;
+            }
+         }
+		 if(count>1)
+		 {
+		 for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("tns").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath(xpath1)).stringValue()),"A")))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         }
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_DL_LVL_sameLISTMultipleOTHER(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/directorylistingform/listingsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+		 String section2=(new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("captionindentsection").toString();
+		 XOMAccessBean accessBean1 = xcb.xpath(section2);
+		 XOMContainerBean arr1[] = accessBean1.nodeSet();
+		 boolean flag=false;
+		 int[] tmparr=new int[arr1.length];
+		 
+		 if(arr1.length>0)
+		 {
+		 for(int j=0;j<arr1.length;j++)
+		 {
+		 
+          String xpath1 = (new StringBuilder(String.valueOf(section2))).append("[").append(j + 1).append("]/").append("lvl").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue())))
+			{
+			int tmp= Integer.parseInt((xcb.xpath(xpath1)).stringValue());
+			tmparr[j]=tmp;
+			
+         }
+		 }
+		 
+         }
+		 
+		 for(int j=0;j<arr1.length-1;j++)
+		 {
+		 if(tmparr[j] !=0)
+		 {
+		 for(int k=j+1;k<arr1.length;k++)
+		 {
+		 if(tmparr[j]==tmparr[k])
+		 flag=true;
+		 }
+		 }
+		 }
+		 String tmpPath=(new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("captionindentsection[1]/lvl").toString();
+		 if(flag)
+		 xcb.logError(ecode, emsg, tmpPath);
+   }
+  
+ }
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_DL_LVLMultipleOTHER(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/directorylistingform/listingsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+		 String section2=(new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("captionindentsection").toString();
+		 XOMAccessBean accessBean1 = xcb.xpath(section2);
+		 XOMContainerBean arr1[] = accessBean1.nodeSet();
+		 if(arr1.length>0)
+		 {
+		 for(int j=0;j<arr1.length;j++)
+		 {
+		 
+          String xpath1 = (new StringBuilder(String.valueOf(section2))).append("[").append(j + 1).append("]/").append("lvl").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listingcontrolsection/doi").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue())) && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue())))
+			{
+			int tmp1=Integer.parseInt((xcb.xpath(xpath1)).stringValue());
+			int tmp2=Integer.parseInt((xcb.xpath(xpath2)).stringValue());
+			if(tmp1 >= tmp2)
+			{
+			xcb.logError(ecode, emsg, xpath1);
+			}
+			
+         }
+		 }
+         }
+   }
+  
+ }
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_DL_TOAMultipleOTHER(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/directorylistingform/listingsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+		 String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listingcontrolsection/toa").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listinginstructionsection/title1").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listinginstructionsection/title2").toString();
+		   String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listinginstructionsection/tl").toString();
+		   String xpath5 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listinginstructionsection/tld").toString();
+		   String xpath6 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listinginstructionsection/title1d").toString();
+		   String xpath7 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("listinginstructionsection/title2d").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isNotEqualToValues(((xcb.xpath(xpath1)).stringValue()),"BP"))
+			&& ((new Position()).positionOftagValueEqualToValues(1, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "1"))
+			&& (!(((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/reqtyp")).stringValue()),"CB"))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/act")).stringValue()),"V"))))
+			&& (((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))
+			|| ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue()))
+			|| ((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue()))
+			|| ((new Populated()).isPopulated((xcb.xpath(xpath5)).stringValue()))
+			|| ((new Populated()).isPopulated((xcb.xpath(xpath6)).stringValue()))
+			|| ((new Populated()).isPopulated((xcb.xpath(xpath7)).stringValue()))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+		 
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_TOAMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+	try{
+		String section1="/xml/localservicerequest/directorylistingform/listingsection";
+		XOMAccessBean accessBean = xcb.xpath(section1);
+         XOMContainerBean arr[] = accessBean.nodeSet();
+         int count=0;
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listingcontrolsection/").append("toa").toString();
+          String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("title1").toString();
+          String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("title2").toString();
+          String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("tl").toString();
+          String xpath5 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("tld").toString();
+          String xpath6 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("title1d").toString();
+          String xpath7 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("title2d").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+            && ((new Equals()).isNotEqualToValues(((xcb.xpath(xpath1)).stringValue()),"BP"))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/reqtyp")).stringValue()),"CB"))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/act")).stringValue()),"V"))
+			&& ((new Position()).positionOftagValueEqualToValues(1,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1"))
+			&& (((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath5)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath6)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath7)).stringValue()))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_chanpairMultipleOTHERNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("chanpair").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+		   String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("ci").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&&	((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"V,N,W,C"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))) 
+                 || (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S,V"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+                 || ( (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X"))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))
+                         && (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath3)).stringValue()),"B"))
+						 && ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))
+                         && ( (((new Position()).positionOftagValueNotEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 || ((new Position()).positionOftagValueNotEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4,9")))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))))
+			&& (((new SpecialFormat()).isPatternNotMatches(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue()),".1-.|.22.|.23."))
+			|| (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+			|| (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath4)).stringValue()),"E"))
+						 && ((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue())))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_chanpairMultipleOTHER(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("chanpair").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isNotPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath(xpath2)).stringValue()),"N,V,W"))
+			&& ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S,V"))
+			&& (((new Position()).positionOftagValueEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "1,2,3,W,X")) 
+            || ((new Equals()).isEqualToValues(((xcb.xpath(xpath3)).stringValue()),"B"))
+			|| (((new Position()).positionOftagValueEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4"))
+			 && ((new Position()).positionOftagValueEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4,9")))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_SHELFMultipleOTHERNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("shelf").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","CT,NY,MA,VT,NH,RI,ME"))
+			&& (((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"N,C"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue())))
+				 || (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"P,R"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue()))))
+			&& ((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"W"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue())))
+				 || (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"R"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue()))))
+			&& (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath3)).stringValue()),"C"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))
+				 || (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_SHELFMultipleOTHER(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("shelf").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isNotPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ( (((new Equals()).isEqualToValues(((xcb.xpath(xpath2)).stringValue()),"N"))
+			&& ((new Position()).positionOftagValueEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "P,R"))) 
+            || (((new Equals()).isEqualToValues(((xcb.xpath(xpath2)).stringValue()),"W"))
+			&& ((new Position()).positionOftagValueEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "R")))
+			 || ((new Equals()).isEqualToValues(((xcb.xpath(xpath3)).stringValue()),"C")))
+			 && ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S")))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_SHELFMultipleORNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("shelf").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+		   String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("ci").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","DC,DE,MD,NJ,PA,VA"))
+			&&	((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"V,N,W,C"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))) 
+                 || (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S,V"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+                 || ( (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X,P,R"))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))
+                         && (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath3)).stringValue()),"B"))
+						 && ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))
+                         && ( (((new Position()).positionOftagValueNotEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 || ((new Position()).positionOftagValueNotEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4,9")))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue()))))
+				 || ((new Equals()).isEqualToValues(((xcb.xpath(xpath4)).stringValue()),"E")) ))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_SHELFMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("shelf").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isNotPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","DC,DE,MD,NJ,PA,VA"))
+			&&	((new Equals()).isEqualToValues(((xcb.xpath(xpath2)).stringValue()),"N,V,W")) 
+            && ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S,V")) 
+            && ( ((new Position()).positionOftagValueEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X")) 
+                         || ((new Equals()).isEquals(((xcb.xpath(xpath3)).stringValue()),"B")) 
+                         || (((new Position()).positionOftagValueEqualToValue(2, (xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()), "4")) 
+                                 && ((new Position()).positionOftagValueEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4,9"))) ) )
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_cableidMultipleORNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cableid").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","CT,NY,MA,VT,NH,RI,ME"))
+			&& (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"C,N,V,W"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))) 
+                 && (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S,V"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+                 && (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,4,W,X"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))
+				 && (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath3)).stringValue()),"B"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))
+                 && ( (((new Position()).positionOftagValueNotEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4,9")))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue()))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_cableidMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cableid").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isNotPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","CT,NY,MA,VT,NH,RI,ME"))
+			&&	((new Equals()).isEqualToValues(((xcb.xpath(xpath2)).stringValue()),"N,V,W")) 
+            && ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S,V")) 
+            && ( ((new Position()).positionOftagValueEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X")) 
+                         || ((new Equals()).isEquals(((xcb.xpath(xpath3)).stringValue()),"B")) 
+                         || (((new Position()).positionOftagValueEqualToValue(2, (xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()), "4")) 
+                                 && ((new Position()).positionOftagValueEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4,9"))) ) )
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_CTIMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("rl").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((((new Equals()).isNotEquals(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S"))
+			&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+			|| (((new Position()).positionOftagValueNotEqualToValue(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "F"))
+			&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))
+			|| (((new Equals()).isNotEquals(((xcb.xpath(xpath2)).stringValue()),"V"))
+			&& ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue())))
+			|| (((new Equals()).isNotEquals(((xcb.xpath(xpath3)).stringValue()),"Y"))
+			&& ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_systemidMultipleORNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("systemid").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		  String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","MD,VA,DC,DE,PA,NJ"))
+			&&	((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"V,N,W,C"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))) 
+                 || (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S,V"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+                 || ( (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X"))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))
+                         && (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath4)).stringValue()),"B"))
+						 && ((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue())))
+                         && ( (((new Position()).positionOftagValueNotEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 || ((new Position()).positionOftagValueNotEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4,9")))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue()))))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_LS_systemidMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+ 
+  String section1="/xml/localservicerequest/loopserviceform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("systemid").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		  String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isNotPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","MD,VA,DC,DE,PA,NJ"))
+			&&	((new Equals()).isEqualToValues(((xcb.xpath(xpath2)).stringValue()),"N,V,W")) 
+            && ((new Equals()).isEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S,V")) 
+            && ( ((new Position()).positionOftagValueEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X")) 
+                         || ((new Equals()).isEquals(((xcb.xpath(xpath4)).stringValue()),"B")) 
+                         || (((new Position()).positionOftagValueEqualToValue(2, (xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()), "4")) 
+                                 && ((new Position()).positionOftagValueEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4,9"))) ) )
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_CHAINPAIRMultipleORNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("chanpair").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("npt").toString();
+		   String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+		              
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&&	((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"V"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))) 
+                 || (((new Equals()).isNotEqualToValues((xcb.xpath(xpath3).stringValue()),"D,E"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))
+                 || (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+                 || ( (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X"))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))
+                         && (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath4)).stringValue()),"B"))
+						 && ((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue())))
+                         && ( (((new Position()).positionOftagValueNotEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 || ((new Position()).positionOftagValueNotEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue()))))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_CHAINPAIRMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("chanpair").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("npt").toString();
+		   String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+		              
+          if(((new Populated()).isNotPopulated((xcb.xpath(xpath1)).stringValue()))
+			&&	(((new Equals()).isEquals(((xcb.xpath(xpath2)).stringValue()),"V")) 
+                 && ((new Equals()).isEqualToValues((xcb.xpath(xpath3).stringValue()),"D,E"))  
+                 && ((new Equals()).isEquals(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S")) 
+                 && ( (((new Position()).positionOftagValueEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X")))
+                         || ((new Equals()).isEquals(((xcb.xpath(xpath4)).stringValue()),"B"))
+                         || ( ((new Position()).positionOftagValueEqualToValue(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 && ((new Position()).positionOftagValueEqualToValue(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4"))))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_SHELFMultipleORNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("shelf").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("npt").toString();
+		   String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+		              
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","MD,VA,DC,DE,PA,NJ"))
+			&&	((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"V"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))) 
+                 || (((new Equals()).isNotEqualToValues((xcb.xpath(xpath3).stringValue()),"D,E"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))
+                 || (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+                 || ( (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X"))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))
+                         && (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath4)).stringValue()),"B"))
+						 && ((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue())))
+                         && ( (((new Position()).positionOftagValueNotEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 || ((new Position()).positionOftagValueNotEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue()))))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_SHELFMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("shelf").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("npt").toString();
+		   String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+		              
+          if(((new Populated()).isNotPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","MD,VA,DC,DE,PA,NJ"))
+			&&	(((new Equals()).isEquals(((xcb.xpath(xpath2)).stringValue()),"V")) 
+                 && ((new Equals()).isEqualToValues((xcb.xpath(xpath3).stringValue()),"D,E"))  
+                 && ((new Equals()).isEquals(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S")) 
+                 && ( (((new Position()).positionOftagValueEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X")))
+                         || ((new Equals()).isEquals(((xcb.xpath(xpath4)).stringValue()),"B"))
+                         || ( ((new Position()).positionOftagValueEqualToValue(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 && ((new Position()).positionOftagValueEqualToValue(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4"))))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_CBCID2MultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("crossboxcableidentification2/cbcid2").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("npt").toString();
+		              
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"V"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))) 
+                 || (((new Equals()).isNotEqualToValues((xcb.xpath(xpath3).stringValue()),"D,E"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))
+                 || (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"B"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+                 || (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"3,4,R"))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_CABLEIDMultipleORNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cableid").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("npt").toString();
+		    String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","CT,NY,MA,VT,NH,RI,ME"))
+			&& ((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"V"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))) 
+                 || (((new Equals()).isNotEqualToValues((xcb.xpath(xpath3).stringValue()),"D,E"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))
+                 || (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+                 || ( (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X"))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))
+                         && (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath4)).stringValue()),"B"))
+						 && ((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue())))
+                         && ( (((new Position()).positionOftagValueNotEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 || ((new Position()).positionOftagValueNotEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")))))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_CABLEIDMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cableid").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("npt").toString();
+		    String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isNotPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","CT,NY,MA,VT,NH,RI,ME"))
+			&&	(((new Equals()).isEquals(((xcb.xpath(xpath2)).stringValue()),"V")) 
+                 && ((new Equals()).isEqualToValues((xcb.xpath(xpath3).stringValue()),"D,E"))  
+                 && ((new Equals()).isEquals(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S")) 
+                 && ( (((new Position()).positionOftagValueEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X")))
+                         || ((new Equals()).isEquals(((xcb.xpath(xpath4)).stringValue()),"B"))
+                         || ( ((new Position()).positionOftagValueEqualToValue(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 && ((new Position()).positionOftagValueEqualToValue(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")))))) 
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_SYSIDMultipleORNegate(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("systemid").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("npt").toString();
+		    String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","MD,VA,DC,DE,PA,NJ"))
+			&&	((((new Equals()).isNotEqualToValues(((xcb.xpath(xpath2)).stringValue()),"V"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))) 
+                 || (((new Equals()).isNotEqualToValues((xcb.xpath(xpath3).stringValue()),"D,E"))
+				 && ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue())))
+                 || (((new Equals()).isNotEqualToValues(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S"))
+				 && ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue())))
+                 || ( (((new Position()).positionOftagValueNotEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X"))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue())))
+                         && (((new Equals()).isNotEqualToValues(((xcb.xpath(xpath4)).stringValue()),"B"))
+						 && ((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue())))
+                         && ( (((new Position()).positionOftagValueNotEqualToValues(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 || ((new Position()).positionOftagValueNotEqualToValues(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")))
+						&& ((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos")).stringValue()))))))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_SYSIDMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+  XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("systemid").toString();
+		  String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+		   String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("npt").toString();
+		    String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("cti").toString();
+          
+          if(((new Populated()).isNotPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& (EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","state","MD,VA,DC,DE,PA,NJ"))
+			&&	(((new Equals()).isEquals(((xcb.xpath(xpath2)).stringValue()),"V")) 
+                 && ((new Equals()).isEqualToValues((xcb.xpath(xpath3).stringValue()),"D,E"))  
+                 && ((new Equals()).isEquals(((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/sli")).stringValue()),"S")) 
+                 && ( (((new Position()).positionOftagValueEqualToValues(2,(xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue()),"1,2,3,W,X")))
+                         || ((new Equals()).isEquals(((xcb.xpath(xpath4)).stringValue()),"B"))
+                         || ( ((new Position()).positionOftagValueEqualToValue(2, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")) 
+                                 && ((new Position()).positionOftagValueEqualToValue(3, ((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue())), "4")))))) 
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_PSISRMulORValues(XOMContainerBean xcb, String ecode, String emsg)
+ {
+  try{
+   String section1="/xml/localservicerequest/portserviceform/servicedetailsection";
+   XOMAccessBean accessBean = xcb.xpath(section1);
+   XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+    for(int i = 0; i < arr.length; i++)
+    {
+     String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("isr").toString();
+     String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+     String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("ltos").toString();
+     String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("sdp").toString();
+
+     if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue())))
+     {
+		if((((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue())) && ((new Equals()).isNotEqualToValues((xcb.xpath(xpath2).stringValue()),"N,V"))) || (Pattern.matches(".[^Pp].*", xcb.xpath(xpath3).stringValue())) || (((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue())) && ((new Equals()).isNotEqualToValues((xcb.xpath(xpath4).stringValue()),"A"))))
+		{
+			xcb.logError(ecode,emsg,xpath1);
+		}
+	 }
+    }
+
+   }
+
+  }
+  catch(Exception e)
+  { }
+ }
+
+function void Fun_FieldWithMoreThanOneOCCValues(XOMContainerBean xcb, String ecode, String emsg)
+ {
+  try{
+   String section1="/xml/localservicerequest/portserviceform/servicedetailsection";
+   XOMAccessBean accessBean = xcb.xpath(section1);
+   XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+    for(int i = 0; i < arr.length; i++)
+    {
+     String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("isr").toString();
+
+     if((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+     {
+		int countA=0;
+		int countC=0;
+		int countE=0;
+		int countF=0;
+		int countH=0;
+		int countJ=0;
+		String val=(xcb.xpath(xpath1)).stringValue();
+		for(int j=0;j<val.length();j++)
+		{
+			char tmp=val.charAt(j);
+			if(tmp=='A' || tmp=='a')
+			countA++;
+			else if(tmp=='C' || tmp=='c')
+			countC++;
+			else if(tmp=='E' || tmp=='e')
+			countE++;
+			else if(tmp=='F' || tmp=='f')
+			countF++;
+			else if(tmp=='H' || tmp=='h')
+			countH++;
+			else if(tmp=='J' || tmp=='j')
+			countJ++;
+			
+		}
+      	if(countA>1 || countC>1 || countE>1 || countF>1 || countH>1 || countJ>1)
+			xcb.logError(ecode,emsg,xpath1);
+	 }
+    }
+
+   }
+
+  }
+  catch(Exception e)
+  { }
+ }
+
+function void Fun_PSRLMulOR(XOMContainerBean xcb, String ecode, String emsg)
+ {
+  try{
+   String section1="/xml/localservicerequest/portserviceform/servicedetailsection";
+   XOMAccessBean accessBean = xcb.xpath(section1);
+   XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+    for(int i = 0; i < arr.length; i++)
+    {
+     String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("rl").toString();
+     String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+     String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("oecckt").toString();
+
+     if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue())) 
+     		  && ((((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/reqtyp")).stringValue())) 
+     		  && ((new Equals()).isNotEquals((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/reqtyp")).stringValue(),"DB"))) 
+     		  || (((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue())) 
+     		  && ((new Equals()).isNotEquals((xcb.xpath(xpath2)).stringValue(),"V"))) 
+     		  || ((new Populated()).isNotPopulated((xcb.xpath(xpath3)).stringValue()))))
+     		  {
+               		xcb.logError(ecode,emsg,xpath1);
+		  }
+    }
+
+   }
+
+  }
+  catch(Exception e)
+  { }
+ }
+
+
+function void Fun_LSNP_RLMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+ {
+  try{
+   String section1="/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection";
+   XOMAccessBean accessBean = xcb.xpath(section1);
+   XOMContainerBean arr[] = accessBean.nodeSet();
+   if(arr.length>0)
+   {
+    for(int i = 0; i < arr.length; i++)
+    {
+     String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("rl").toString();
+     String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("lna").toString();
+     String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/").append("oecckt").toString();
+
+     if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+       && ( 
+         (!((new Position()).positionOftagValueEqualToValue(2, xcb.xpath("/xml/localservicerequest/lsrform/adminsection/tos").stringValue(), "F")))
+         || ((new Equals()).isNotEqualToValues((xcb.xpath(xpath2).stringValue()),"V"))
+         || ((new Populated()).isNotPopulated((xcb.xpath(xpath3)).stringValue()))
+       )
+     )
+     {
+      xcb.logError(ecode, emsg, xpath1);
+     }
+    }
+
+   }
+
+  }
+  catch(Exception e)
+  { }
+ }
+
+function void Fun_LASF_SpecChar(XOMContainerBean xcb, String ecode, String emsg)
+{
+ try{
+  String section1="/xml/localservicerequest/directorylistingform/listingsection";
+  XOMAccessBean accessBean = xcb.xpath(section1);
+         XOMContainerBean arr[] = accessBean.nodeSet();
+         
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("lasf").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+			&& ((((new Contains()).contains((xcb.xpath(xpath1)).stringValue(),"-")) && ((new Contains()).characterNotPreceededAndFollowedByNumeric((xcb.xpath(xpath1)).stringValue(),"-"))
+    ) || (((new Contains()).contains((xcb.xpath(xpath1)).stringValue(),"/")) && ((new Contains()).characterNotPreceededAndFollowedByNumeric((xcb.xpath(xpath1)).stringValue(),"/"))
+    )))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_ADIMultipleOR(XOMContainerBean xcb, String ecode, String emsg)
+{
+	try{
+		String section1="/xml/localservicerequest/directorylistingform/listingsection";
+		XOMAccessBean accessBean = xcb.xpath(section1);
+         XOMContainerBean arr[] = accessBean.nodeSet();
+         int count=0;
+   if(arr.length>0)
+   {
+         for(int i = 0; i < arr.length; i++)
+         {
+          String xpath1 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("adi").toString();
+          String xpath2 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("lano").toString();
+          String xpath3 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("lasf").toString();
+          String xpath4 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("lasn").toString();
+          String xpath5 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("lath").toString();
+          String xpath6 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("lass").toString();
+          String xpath7 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("laloc").toString();
+          String xpath8 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("last").toString();
+          String xpath9 = (new StringBuilder(String.valueOf(section1))).append("[").append(i + 1).append("]/listinginstructionsection/").append("lazc").toString();
+          
+          if(((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+            &&(((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath3)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath4)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath5)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath6)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath7)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath8)).stringValue()))
+            || ((new Populated()).isPopulated((xcb.xpath(xpath9)).stringValue()))
+            ))
+            {
+             xcb.logError(ecode, emsg, xpath1);
+            }
+         }
+         
+   }
+  
+ }
+  catch(Exception e)
+ { }
+}
+
+function void Fun_leaseOneOccOfRTY23EqualsMLFor(XOMContainerBean xcb, String ecode, String emsg)
+	{
+		try
+		{
+			if(((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/reqtyp")).stringValue())) && ((new Equals()).isEqualToValues((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/reqtyp").stringValue()),"AB,BB,CB,JB")))
+			{
+				if(((new Populated()).isPopulated((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/act")).stringValue())) && ((new Equals()).isEqualToValues((xcb.xpath("/xml/localservicerequest/lsrform/adminsection/act").stringValue()),"V")))
+				{
+					int count=0;
+					if((EachOccOfFieldIsEqualValues(xcb,"/xml/localservicerequest/enduserform/locationsection","elt","E,P")))
+					{
+					String section="/xml/localservicerequest/directorylistingform/listingsection";
+					XOMAccessBean accessBean = xcb.xpath(section);
+					XOMContainerBean arr[] = accessBean.nodeSet();
+					
+					for(int i = 0; i < arr.length; i++)
+					{
+					String xpath1 = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append("listingcontrolsection/rty").toString();
+					if((new Populated()).isPopulated((xcb.xpath(xpath1)).stringValue()))
+					{
+					String val=xcb.xpath(xpath1).stringValue();
+					if(!(Pattern.matches(".[mM][lL]", val)))
+					{
+					count++;
+					}
+					}
+					}
+					if(count==arr.length)
+					{
+					xcb.logError(ecode, emsg, "/xml/localservicerequest/directorylistingform/listingsection[1]/listingcontrolsection/rty");
+					}
+					}
+					
+					
+				}
+				
+			}
+		}
+		catch(Exception e)
+		{ 
+			 
+		}
+	}
+
+
+function boolean AnyOccOfFieldIsNotEqualfield(XOMContainerBean xcb, String section, String field, String field1)
+{
+		try{
+		XOMAccessBean accessBean = xcb.xpath(section);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+        int count=0;
+        for(int i = 0; i < arr.length; i++)
+        {
+        	String xpath = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append(field).toString();
+        	if(((new Populated()).isPopulated((xcb.xpath(xpath)).stringValue()))
+				&& ((new Equals()).isEqualToValues((xcb.xpath(xpath).stringValue()),(xcb.xpath(field1).stringValue()))))
+        	{
+        		count++;
+        	}
+        }
+        if(count == 0)
+			return true;
+	return false;
+}
+ catch(Exception e)
+{ return false; }
+}
+
+function boolean FieldIsInRangeBWtwoValues(String field, String value1, String value2)
+{
+		try{
+		if(value1 !=null && value1 !="" && value2 !=null && value2 !=""){
+		int val1=Integer.parseInt(value1);
+		int val2=Integer.parseInt(value2);
+		int fld=Integer.parseInt(field);
+		if(fld>=val1 && fld<=val2)
+			return true;
+		return false;
+}
+return false;
+}
+ catch(Exception e)
+{ return false; }
+
+}
+
+function boolean ALLOccOfFieldIsEqualValues(XOMContainerBean xcb, String section, String field, String values)
+{
+		try{
+		XOMAccessBean accessBean = xcb.xpath(section);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+        int count=0;
+        for(int i = 0; i < arr.length; i++)
+        {
+        	String xpath = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append(field).toString();
+        	if(((new Populated()).isPopulated((xcb.xpath(xpath)).stringValue()))
+				&& ((new Equals()).isEqualToValues((xcb.xpath(xpath).stringValue()),values)))
+        	{
+        		count++;
+        	}
+        }
+        if(count == arr.length)
+			return true;
+	return false;
+}
+ catch(Exception e)
+{ return false; }
+}
+
+
+function boolean EachOccOfFieldIsEqualValues(XOMContainerBean xcb, String section, String field, String values)
+{
+		try{
+		XOMAccessBean accessBean = xcb.xpath(section);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+        int count=0;
+        for(int i = 0; i < arr.length; i++)
+        {
+        	String xpath = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append(field).toString();
+        	if(((new Populated()).isPopulated((xcb.xpath(xpath)).stringValue()))
+				&& ((new Equals()).isEqualToValues((xcb.xpath(xpath).stringValue()),values)))
+        	{
+        		count++;
+        	}
+        }
+        if(count > 0)
+			return true;
+	return false;
+}
+ catch(Exception e)
+{ return false; }
+}
+
+function boolean AnyOccOfFieldPosIsEqualValues(XOMContainerBean xcb, String section, String field, int pos, String values)
+{
+		try{
+		XOMAccessBean accessBean = xcb.xpath(section);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+        int count=0;
+        for(int i = 0; i < arr.length; i++)
+        {
+        	String xpath = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append(field).toString();
+        	if(((new Populated()).isPopulated((xcb.xpath(xpath)).stringValue()))
+				&& ((new Position()).positionOftagValueEqualToValues(pos,(xcb.xpath(xpath).stringValue()),values)))
+        	{
+        		count++;
+        	}
+        }
+        if(count > 0)
+			return true;
+	return false;
+}
+ catch(Exception e)
+{ return false; }
+}
+ 
+function boolean EachOccOfFieldIsNotEqualValues(XOMContainerBean xcb, String section, String field, String values)
+{
+		try{
+		XOMAccessBean accessBean = xcb.xpath(section);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+        int count=0;
+        for(int i = 0; i < arr.length; i++)
+        {
+        	String xpath = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append(field).toString();
+        	if(((new Populated()).isPopulated((xcb.xpath(xpath)).stringValue()))
+				&& ((new Equals()).isNotEqualToValues((xcb.xpath(xpath).stringValue()),values)))
+        	{
+        		count++;
+        	}
+        }
+        if(count > 0)
+			return true;
+	return false;
+}
+ catch(Exception e)
+{ return false; }
+} 
+
+function boolean NoOfOccFieldEqualTo(XOMContainerBean xcb, String field, int totalpnum)
+{
+		try{
+		boolean flag=false;
+		String completexml=xcb.getXmlInstance();
+		Occurence occ=new Occurence(completexml);
+		flag=occ.noOfOccurenceEqualTo(field,totalpnum);
+		return flag;
+		}
+		catch(Exception e)
+		{ 
+	return false; 
+	}
+}
+
+function boolean countPortedNbrRangevalues(XOMContainerBean xcb, String field, int totalpnum)
+{
+		try{
+		boolean flag=false;
+		String completexml=xcb.getXmlInstance();
+		Occurence occ=new Occurence(completexml);
+		flag=occ.countPortedNbrRangevalues(field,totalpnum);
+		return flag;
+		}
+		catch(Exception e)
+		{ 
+	return false; 
+	}
+}
+
+
+function boolean anyOccurenceExists(XOMContainerBean xcb, String field)
+{
+		try{
+		boolean flag=false;
+		String completexml=xcb.getXmlInstance();
+		Occurence occ=new Occurence(completexml);
+		flag=occ.anyOccurenceExists(field);
+		return flag;
+		}
+		catch(Exception e)
+		{ 
+	return false; 
+	}
+}
+
+function boolean AllOccOfFieldNotSequential(XOMContainerBean xcb, String field)
+{
+		try{
+		boolean flag=false;
+		String completexml=xcb.getXmlInstance();
+		Occurence occ=new Occurence(completexml);
+		flag=occ.allOccurenceValuesnotSequential(field);
+		return flag;
+		}
+		catch(Exception e)
+		{ 
+	return false; 
+	}
+}
+
+function boolean anyOccurenceEqualToValue(XOMContainerBean xcb, String field1, String field2)
+{
+		try{
+		boolean flag=false;
+		String completexml=xcb.getXmlInstance();
+		Occurence occ=new Occurence(completexml);
+		flag=occ.valueofanyoccoffield1equalsvalueofanyoccoffield2(field1,field2);
+		return flag;
+		}
+		catch(Exception e)
+		{ 
+	return false; 
+	}
+}
+
+function boolean anyOccurenceNotEqualToValue(XOMContainerBean xcb, String field1, String field2)
+{
+		try{
+		boolean flag=false;
+		String completexml=xcb.getXmlInstance();
+		Occurence occ=new Occurence(completexml);
+		flag=occ.anyOccurenceNotEqualToValue(field1,field2);
+		return flag;
+		}
+		catch(Exception e)
+		{ 
+	return false; 
+	}
+}
+
+function boolean field1NotEqualsField2(XOMContainerBean xcb, String field1, String field2)
+{
+		try{
+		boolean flag=false;
+		Equals ob=new Equals();
+		//String s1=xcb.xpath(field1).stringValue();
+		String s2=xcb.xpath(field2).stringValue();
+		flag=ob.isNotEquals(field1,s2);
+		return flag;
+		}
+		catch(Exception e)
+		{ 
+	return false; 
+	}
+}
+
+function boolean AllOccOfFieldNotPop(XOMContainerBean xcb, String field, String section)
+{
+		try{
+		XOMAccessBean accessBean = xcb.xpath(section);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+        int count=0;
+        for(int i = 0; i < arr.length; i++)
+        {
+        	String xpath = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append(field).toString();
+        	if((new Populated()).isPopulated((xcb.xpath(xpath)).stringValue()))
+			{	
+					count=count+1;
+			}
+        }
+        if(count != arr.length)
+        {
+        	return true;
+        }
+     return false;
+}
+ catch(Exception e)
+{ return false; }
+}
+
+function boolean AnyOccOfFieldPop(XOMContainerBean xcb, String field, String section)
+{
+		try{
+		if(section.contains("[i]"))
+		{
+		String tmpSection=section.substring(0, section.indexOf("[i]"));
+		String tmpSection1=section.substring(section.indexOf("[i]")+4);
+		XOMAccessBean accessBean = xcb.xpath(tmpSection);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+        int count=0;
+		for(int i = 0; i < arr.length; i++)
+        {
+			
+        	String xpath1 = (new StringBuilder(String.valueOf(tmpSection))).append("[").append(i + 1).append("]/").append(tmpSection1).toString();
+			XOMAccessBean accessBean1 = xcb.xpath(xpath1);
+			XOMContainerBean arr1[] = accessBean1.nodeSet();
+			for(int j = 0; j < arr1.length; j++)
+			{
+			String xpath2 = (new StringBuilder(String.valueOf(xpath1))).append("[").append(j + 1).append("]/").append(field).toString();
+        	if((new Populated()).isPopulated((xcb.xpath(xpath2)).stringValue()))
+			{	
+					count=count+1;
+			}
+			}
+        }
+		if(count >0)
+        {
+        	return true;
+        }
+		
+		}
+		else
+		{
+		XOMAccessBean accessBean = xcb.xpath(section);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+        int count=0;
+        for(int i = 0; i < arr.length; i++)
+        {
+        	String xpath = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append(field).toString();
+        	if((new Populated()).isPopulated((xcb.xpath(xpath)).stringValue()))
+			{	
+					count=count+1;
+			}
+        }
+        if(count >0)
+        {
+        	return true;
+        }
+		}
+     return false;
+}
+ catch(Exception e)
+{ return false; }
+}
+
+function void multipleNotCheckMinMax(XOMContainerBean xcb, String section, String field, String value1, String value2,String errcode,String errmsg)
+{
+		try{
+		XOMAccessBean accessBean = xcb.xpath(section);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+        int count=0;
+		int tmp1=Integer.parseInt(value1);
+		int tmp2=Integer.parseInt(value2);
+        for(int i = 0; i < arr.length; i++)
+        {
+        	String xpath = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append(field).toString();
+        	if(((new Populated()).isPopulated((xcb.xpath(xpath)).stringValue()))
+				&& (!((new LengthCheck()).checkMinMaxLength((xcb.xpath(xpath).stringValue()),tmp1,tmp2))))
+        	{
+        		xcb.logError(errcode,errmsg,xpath);
+        	}
+        }
+       }
+ catch(Exception e)
+{ System.out.println("Exception:multipleNotCheckMinMax"); }
+}
+
+function void F1greaterThanF2(XOMContainerBean xcb, String section, String eCode, String eMsg)
+{
+		try{
+		XOMAccessBean accessBean = xcb.xpath(section);
+        XOMContainerBean arr[] = accessBean.nodeSet();
+		String ddd=null, tcper=null;
+        for(int i = 0; i < arr.length; i++)
+        {
+        	String xpath = (new StringBuilder(String.valueOf(section))).append("[").append(i + 1).append("]/").append("tcper").toString();
+			tcper=xcb.xpath(xpath).stringValue();
+			ddd=xcb.xpath("/xml/localservicerequest/lsrform/adminsection/ddd").stringValue();
+			//System.out.println("tcper:"+tcper+"\nddd:"+ddd);
+			if(!((new DateCheck()).isGreaterThanOrEqualTo(tcper,ddd)))
+        	{
+        		xcb.logError(eCode,eMsg,xpath);
+        	}
+		
+        }
+	}
+ catch(Exception e)
+{ System.out.println("Exception:F1greaterThanF2"); }
+
+}
+
+
+//################ FORM LEVEL RULES ###################
+
+
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+//@@@@@@@@@ SECTION LEVEL RULES @@@@@@@@@@@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//################## LSR FORM RULES ###################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//##############   EU FORM   ###############
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//##############   DL FORM   ###############
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//@@@@@@@@@@ HGI FORM  @@@@@@@@@@@@@@@@@@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//@@@@@@@@@@@@@@@ LS FORM @@@@@@@@@@@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//@@@@@@@@@@@@@@ NP FORM @@@@@@@@@@@@@@@@@@@@@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//@@@@@@@@@@@@@ PS FORM @@@@@@@@@@@@@@@@@@@@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//@@@@@@@@@@@ LSNP FORM @@@@@@@@@@@@@@@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//@@@@@@@@@@@@@ RS FORM @@@@@@@@@@@@@@@@@@@@@@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

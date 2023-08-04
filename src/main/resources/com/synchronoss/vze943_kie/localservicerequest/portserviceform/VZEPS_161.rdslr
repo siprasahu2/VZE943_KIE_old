@@ -1,0 +1,47 @@
+package com.synchronoss.vze943_kie.localservicerequest.portserviceform;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEPS_161" dialect "mvel" ruleflow-group "PS_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/portserviceform" is exists 
+		
+AND
+ The_Rule "VZEPS_161" multiple times "fa" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]/features[i]" is populated
+		
+AND
+ Rule "VZEPS_161" multiple times "fa" in "/xml/localservicerequest/portserviceform/servicedetailsection[i]/features[i]" is not equal to "N,C,D"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/act" is equal to values "C"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/ac" is equal to values "B,C,D,E"
+End Brace
+
+	then
+ 	 	 the rule "VZEPS_161" with error code "VZEPS167" with message "FA VALID VALUE = N, C, D" for the field "fa" of section "/xml/localservicerequest/portserviceform/servicedetailsection[i]/features[i]"
+end

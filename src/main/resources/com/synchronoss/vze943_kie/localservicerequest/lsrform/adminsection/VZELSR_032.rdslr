@@ -1,0 +1,62 @@
+package com.synchronoss.vze943_kie.localservicerequest.lsrform.adminsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZELSR_032" dialect "mvel" ruleflow-group "LSR_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the "/xml/localservicerequest/lsrform/adminsection/atn" is not populated
+		
+AND
+ Position 1 of "/xml/localservicerequest/lsrform/adminsection/reqtyp" field is equal to values "D,E"
+		
+AND
+ 
+Start Brace
+the "/xml/localservicerequest/lsrform/adminsection/act" equals "T"
+			
+OR
+ 
+Start Brace
+the "/xml/localservicerequest/lsrform/adminsection/act" equals "C"
+				
+AND
+ 
+Start Brace
+Any occurrence of "lna" in "/xml/localservicerequest/portserviceform/servicedetailsection" is equal to "T"
+				
+OR
+ Any occurrence of "lna" in "/xml/localservicerequest/resaleserviceform/servicedetailsection" is equal to "T"
+End Brace
+
+End Brace
+
+End Brace
+
+End Brace
+
+ 	 then
+ 	 	 the error code "VZELSR112" with message "ATN IS REQUIRED"  for the field "/xml/localservicerequest/lsrform/adminsection/atn"
+end

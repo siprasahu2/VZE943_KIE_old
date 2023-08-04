@@ -1,0 +1,44 @@
+package com.synchronoss.vze943_kie.localservicerequest.huntingform.huntgroup;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEHGI_031" dialect "mvel" ruleflow-group "HGI_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/huntingform" is exists 
+		
+AND
+ The_Rule "VZEHGI_031" multiple times "htn" in "/xml/localservicerequest/huntingform/huntgroup[i]/huntingdetail[i]" is populated
+		
+AND
+ Rule "VZEHGI_031" multiple times "htn" in "/xml/localservicerequest/huntingform/huntgroup[i]/huntingdetail[i]" matches_the_pattern ".{0,17}"
+		
+AND
+ Rule "VZEHGI_031" multiple times "htn" in "/xml/localservicerequest/huntingform/huntgroup[i]/huntingdetail[i]" is AlphaNumeric_without following Special Character set "- ,"
+End Brace
+
+ 	 then
+ 	 	 the rule "VZEHGI_031" with error code "VZEHGI032" with message "HTN VALID VALUE = 1-17 ALPHA, NUMERIC, HYPHEN, COMMA, SPACE" for the field "htn" of section "/xml/localservicerequest/huntingform/huntgroup[i]/huntingdetail[i]"
+end

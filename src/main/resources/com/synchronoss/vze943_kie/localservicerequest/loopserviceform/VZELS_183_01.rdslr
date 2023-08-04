@@ -1,0 +1,44 @@
+package com.synchronoss.vze943_kie.localservicerequest.loopserviceform;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZELS_183_01" dialect "mvel" ruleflow-group "LS_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/loopserviceform" is exists 
+		
+AND
+ The_Rule "VZELS_183_01" multiple times "relayrack" in "/xml/localservicerequest/loopserviceform/servicedetailsection[i]" is populated
+		
+AND
+ Rule "VZELS_183_01" multiple times "relayrack" in "/xml/localservicerequest/loopserviceform/servicedetailsection[i]" do_not_matches_the_pattern "[A-Za-z]{3,3}[0-9]{3,3}.*"
+		
+AND
+ Position 2 of "/xml/localservicerequest/lsrform/adminsection/tos" field is equal to values "F,P,R"
+End Brace
+
+ 	 then
+ 	 	 the rule "VZELS_183_01" with error code "VZELS168" with message "RELAY RACK MUST BE 3 ALPHA FOLLOWED BY 3 NUMERICS WHEN ORDERING LINE SHARING, LINE SPLITTING OR LOOP SHARING" for the field "relayrack" of section "/xml/localservicerequest/loopserviceform/servicedetailsection[i]"
+end

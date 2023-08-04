@@ -1,0 +1,54 @@
+package com.synchronoss.vze943_kie.localservicerequest.lsrform.adminsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZELSR_222" dialect "mvel" ruleflow-group "LSR_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the "/xml/localservicerequest/lsrform/adminsection/tos" is populated
+		
+AND
+ Any occurrence of "lna" in "/xml/localservicerequest/portserviceform/servicedetailsection" is equal to "N"
+		
+AND
+ 
+Start Brace
+the existance space of "/xml/localservicerequest/lsrform/adminsection/tos" in the range from 1 to 2
+		
+OR
+ the 2 position of "/xml/localservicerequest/lsrform/adminsection/tos" is not_equal to values "E,C,D,T,-"
+		
+OR
+ the 3 position of "/xml/localservicerequest/lsrform/adminsection/tos" is not_equal to values "A,B,-"
+		
+OR
+ the 4 position of "/xml/localservicerequest/lsrform/adminsection/tos" is not_equal to values "F,R,-"
+End Brace
+
+End Brace
+
+ 	 then
+ 	 	 the error code "VZELSR361" with message "TOS VALUE INVALID WHEN PS.LNA = N"  for the field "/xml/localservicerequest/lsrform/adminsection/tos"
+end

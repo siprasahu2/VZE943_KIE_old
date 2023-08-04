@@ -1,0 +1,56 @@
+package com.synchronoss.vze943_kie.localservicerequest.lsrform.adminsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZELSR_085" dialect "mvel" ruleflow-group "LSR_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the "/xml/localservicerequest/lsrform/adminsection/dfdt" is populated
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/chc" equals "Y"
+		
+AND
+ the length of "/xml/localservicerequest/lsrform/adminsection/dfdt" is 9
+		
+AND
+ the 1 and 2 of the "/xml/localservicerequest/lsrform/adminsection/dfdt" is in the range 0 to 23
+		
+AND
+ the 3 and 4 of the "/xml/localservicerequest/lsrform/adminsection/dfdt" is in the range 0 to 59
+		
+AND
+ the 6 and 7 of the "/xml/localservicerequest/lsrform/adminsection/dfdt" is in the range 0 to 23
+		
+AND
+ the 8 and 9 of the "/xml/localservicerequest/lsrform/adminsection/dfdt" is in the range 0 to 59
+		
+AND
+ the 5 position of "/xml/localservicerequest/lsrform/adminsection/dfdt" is equal to "-"
+End Brace
+
+ 	 then
+ 	 	 the error code "VZELSR489" with message "DFDT RANGE IS PROHIBITED WHEN CHC = Y"  for the field "/xml/localservicerequest/lsrform/adminsection/dfdt"
+end

@@ -1,0 +1,41 @@
+package com.synchronoss.vze943_kie.localservicerequest;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZELSNP_094" dialect "mvel" ruleflow-group "LSNP_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/loopservicewithnumberportabilityform" is exists 
+		
+AND
+ The_Rule "VZELSNP_094" multiple times "tcid" in "/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection[i]/tctosection[i]" is populated
+		
+AND
+ it is not true that_Rule "VZELSNP_094" multiple times "tcid" in "/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection[i]/tctosection[i]" is Numeric
+End Brace
+
+	then
+ 	 	 the rule "VZELSNP_094" with error code "VZELSNP102" with message "INVALID TCID DATA MUST BE NUMERIC" for the field "tcid" of section "/xml/localservicerequest/loopservicewithnumberportabilityform/servicedetailsection[i]/tctosection[i]"
+end

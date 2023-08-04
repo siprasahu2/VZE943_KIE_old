@@ -1,0 +1,50 @@
+package com.synchronoss.vze943_kie.localservicerequest.resaleserviceform;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZERS_030" dialect "mvel" ruleflow-group "RS_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/resaleserviceform" is exists 
+		
+AND
+ The_Rule "VZERS_030" multiple times "s" in "/xml/localservicerequest/resaleserviceform/servicedetailsection[i]" is populated
+		
+AND
+ Rule "VZERS_030" multiple times "s" in "/xml/localservicerequest/resaleserviceform/servicedetailsection[i]" is not equal to "A,C"
+		
+AND
+ Rule "VZERS_030" multiple times "lna" in "/xml/localservicerequest/resaleserviceform/servicedetailsection[i]" is equal to "Y"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/act" is equal to values "Y"
+		
+AND
+ Any occurrence of "state" in "/xml/localservicerequest/enduserform/locationsection" is equal to "DE,PA"
+End Brace
+
+	then
+ 	 	 the rule "VZERS_030" with error code "VZERS031" with message "SUSPEND ACTIVITY VALID VALUE = A, C WHEN STATE = DE, PA" for the field "s" of section "/xml/localservicerequest/resaleserviceform/servicedetailsection[i]"
+end

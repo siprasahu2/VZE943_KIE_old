@@ -1,0 +1,50 @@
+package com.synchronoss.vze943_kie.localservicerequest.listingsection;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEDL_050" dialect "mvel" ruleflow-group "DL_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/directorylistingform" is exists 
+		
+AND
+ The_Rule "VZEDL_050" multiple times "listingindicatorsection/bro" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is populated
+		
+AND
+ Rule "VZEDL_050" multiple times "listingcontrolsection/styc" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is populated
+		
+AND
+ Rule "VZEDL_050" multiple times "listingcontrolsection/styc" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is not equal to "SL"
+		
+AND
+ Rule "VZEDL_050" multiple times "listingcontrolsection/lty" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is populated
+		
+AND
+ Rule "VZEDL_050" multiple times "listingcontrolsection/lty" in "/xml/localservicerequest/directorylistingform/listingsection[i]" is not equal to "1,3,6"
+End Brace
+
+ 	 then
+ 	 	 the rule "VZEDL_050" with error code "VZEDL036" with message "BRO BUSINESS/RESIDENCE PLACEMENT OVERRIDE NOT ALLOWED IF STYLE CODE IS NOT SL AND LTY IS NOT 1, 3, OR 6" for the field "listingindicatorsection/bro" of section "/xml/localservicerequest/directorylistingform/listingsection[i]"
+end

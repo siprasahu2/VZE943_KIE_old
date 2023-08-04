@@ -1,0 +1,47 @@
+package com.synchronoss.vze943_kie.localservicerequest.huntingform.huntgroup;
+import java.util.*;
+import com.synchronoss.ruleserver.core.xpath.XOMContainerBean;
+import com.synchronoss.ruleserver.core.xpath.XOMAccessBean;
+import com.synchronoss.brms.dresclasses.xpath.XPathProcessor;
+import com.synchronoss.brms.dresclasses.xpath.Occurence;
+import com.synchronoss.brms.dresclasses.Populated;
+import com.synchronoss.brms.dresclasses.Equals;
+import com.synchronoss.brms.dresclasses.Contains;
+import com.synchronoss.brms.dresclasses.DatatypeCheck;
+import com.synchronoss.brms.dresclasses.SpaceCheck;
+import com.synchronoss.brms.dresclasses.LengthCheck;
+import com.synchronoss.brms.dresclasses.Position;
+import com.synchronoss.brms.dresclasses.TNFormat;
+import com.synchronoss.brms.dresclasses.RangeOfValues;
+import com.synchronoss.brms.dresclasses.DateCheck;
+import com.synchronoss.brms.dresclasses.Prohibited;
+import com.synchronoss.brms.dresclasses.DateFormatCheck;
+import com.synchronoss.brms.dresclasses.Required;
+import com.synchronoss.brms.dresclasses.CapitalLetterCheck;
+import com.synchronoss.brms.dresclasses.TimeFormatCheck;
+import com.synchronoss.brms.dresclasses.SpecialFormat;
+import com.synchronoss.brms.dresclasses.dao.SupplementOrderCheck;
+rule "VZEHGI_007" dialect "mvel" ruleflow-group "HGI_FORM"
+
+when
+		xcb object
+ 	 Evaluate 
+Start Brace
+ the field_tag "/xml/localservicerequest/huntingform" is exists 
+		
+AND
+ The_Rule "VZEHGI_007" multiple times "ha" in "/xml/localservicerequest/huntingform/huntgroup[i]" is populated
+		
+AND
+ Rule "VZEHGI_007" multiple times "ha" in "/xml/localservicerequest/huntingform/huntgroup[i]" is not equal to "N"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/reqtyp" is equal to values "DB,EB"
+		
+AND
+ the "/xml/localservicerequest/lsrform/adminsection/act" is equal to values "N,T"
+End Brace
+
+ 	 then
+ 	 	 the rule "VZEHGI_007" with error code "VZEHGI007" with message "HA VALID VALUE = N WHEN ACT = N, T" for the field "ha" of section "/xml/localservicerequest/huntingform/huntgroup[i]"
+end
